@@ -1,3 +1,4 @@
+import sys
 import keras
 import numpy as np
 import pandas as pd
@@ -45,12 +46,12 @@ def build_classifier(optimizer):
 
 def train_network(X_train, y_train):
     classifier = KerasClassifier(build_fn = build_classifier)
-    parameters = {'batch_size': [25, 32], 'nb_epoch': [100, 500], 'optimizer': ['adam', 'rmsprop']}
+    parameters = {'batch_size': [25, 32], 'epochs': [100, 500], 'optimizer': ['adam', 'rmsprop']}
     grid_search = GridSearchCV(estimator = classifier, param_grid = parameters, scoring = 'accuracy', cv = 10)
     grid_search = grid_search.fit(X_train, y_train)
     best_parameters = grid_search.best_params_
     best_accuracy = grid_search.best_score_
-    return classifier
+    return classifier, best_parameters, best_accuracy
 
 def predict_result(X_test, y_test, classifier):
     y_pred = classifier.predict(X_test)
@@ -59,11 +60,12 @@ def predict_result(X_test, y_test, classifier):
     return conf_matrix
 
 if __name__ == '__main__':
-    dataset_path = sys.argv[0]
+    dataset_path = sys.argv[1]
     X, y = load_dataset(dataset_path)
     X = encode_data(X)
     X_train, X_test, y_train, y_test = prepare_train_test_set(X, y)
     X_train, X_test = scale_features(X_train, X_test)
-    classifier = train_network(X_train, y_train)
+    classifier, best_parameters, best_accuracy = train_network(X_train, y_train)
+    print("Best parameters: \n", best_parameters, "\nBest accuracy: \n", best_accuracy)
     conf_matrix = predict_result(X_test, y_test, classifier)
-    
+    print("Confusion Matrix: \n", conf_matrix)
